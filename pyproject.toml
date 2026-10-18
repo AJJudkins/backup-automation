@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "backup-automation"
+version = "0.2.0"
+description = "Tar backups with SHA-256 manifest, verification and safe rotation."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+backup-automation = "backup:main"
+
+[tool.setuptools]
+py-modules = ["backup"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

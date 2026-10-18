@@ -62,3 +62,36 @@ def test_config_validation(tmp_path):
     p.write_text("{}")
     with pytest.raises(ValueError):
         backup.load_config(p)
+
+
+def test_config_validation(tmp_path, src):
+    import json
+    def cfg(**kw):
+        c = {"sources": [str(src)], "destination": str(tmp_path / "out"), "keep": 2}
+        c.update(kw)
+        p = tmp_path / "c.json"
+        p.write_text(json.dumps(c))
+        return str(p)
+    assert backup.load_config(cfg())["keep"] == 2
+    for bad in (dict(keep=0), dict(keep="3"), dict(sources=[]), dict(sources=[str(tmp_path / "nope")]),
+                dict(destination=str(src / "inside"))):
+        with pytest.raises(ValueError):
+            backup.load_config(cfg(**bad))
+
+
+def test_cli_errors_are_clean(tmp_path, capsys):
+    assert backup.main(["--config", str(tmp_path / "missing.json")]) == 2
+    assert "error:" in capsys.readouterr().err
+
+
+def test_rotation_only_touches_backup_named_files(tmp_path):
+    for n in ("backup-20260101-000000.tar.gz", "backup-20260102-000000.tar.gz", "backup-notes.tar.gz", "keep.txt"):
+        (tmp_path / n).write_text("x")
+    removed = backup.rotate(tmp_path, 1)
+    assert [Path(r).name for r in removed] == ["backup-20260101-000000.tar.gz"]
+    assert (tmp_path / "backup-notes.tar.gz").exists() and (tmp_path / "keep.txt").exists()
+
+
+def test_archive_is_owner_only(src, tmp_path):
+    r = backup.create_backup([src], tmp_path / "out")
+    assert oct(os.stat(r["archive"]).st_mode & 0o777) == "0o600"
