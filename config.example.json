@@ -1,0 +1,6 @@
+{
+  "sources": ["./sample_source"],
+  "destination": "./backups",
+  "keep": 3,
+  "exclude": ["*.tmp", "__pycache__"]
+}
